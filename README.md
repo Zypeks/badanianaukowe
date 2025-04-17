@@ -11,4 +11,4 @@
   - Parametry funkcji kary dobrać tak aby prawdopodobieństwa błędnej klasyfikacji liczone za pomocą kroswalidacji n-krotnej i 10-krotnej było jak najmniejsze.
   - Porównać prawdopodobieństwa błędnej klasyfikacji w podpunktach a) i b) za pomocą kroswalidacji n-krotnej i 10-krotnej.
 
-![Wyniki skuteczności badanych metod]([https://example.com/path/to/image.png](https://github.com/Zypeks/badanianaukowe/blob/main/4321.png)
+![Wyniki skuteczności badanych metod](https://github.com/Zypeks/badanianaukowe/blob/main/4321.png)
