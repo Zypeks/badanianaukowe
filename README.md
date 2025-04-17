@@ -1,7 +1,7 @@
 # Zadanie Na Studia
 
 ### najpierw należy pobrać dane dry_beans.csv
-[dane]([https://pip.pypa.io/en/stable/](https://github.com/Zypeks/badanianaukowe/blob/main/Dry_Bean_Dataset.csv))
+[dane](https://pip.pypa.io/en/stable/](https://github.com/Zypeks/badanianaukowe/blob/main/Dry_Bean_Dataset.csv)
 ### Zbudować model klasyfikacji metodą LDA dla podanych zmiennych objaśniających i zmiennej objaśnianej.
 Zbudować model klasyfikacji metodą LDA dla dwóch pierwszych zmiennych kanonicznych otrzymanych w podpunkcie a). Zrobić odpowiedni wykres z obszarami klasyfikacji.
 Porównać prawdopodobieństwa błędnej klasyfikacji w podpunktach a) i b) za pomocą kroswalidacji n-krotnej i 10-krotnej.
