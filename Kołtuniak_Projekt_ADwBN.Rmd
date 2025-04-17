@@ -1,0 +1,217 @@
+---
+title: "Analiza danych w badaniach naukowych"
+author: "ADRIAN KOŁTUNIAK"
+date: "`r Sys.Date()`"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(MASS)
+library(tidyverse)
+library(caret)
+library(ggplot2)
+library(e1071)
+library(rpart)
+library(randomForest)
+library(flexdashboard)
+library(glmnet)
+```
+
+## Wczytanie danych
+
+```{r}
+df <- read.csv("Dry_Bean_Dataset.csv", sep= ";") %>%
+  filter(Class %in% c("SEKER", "BARBUNYA", "BOMBAY", "DERMASON")) %>%
+  dplyr::select(Class, Area, EquivDiameter, roundness, ShapeFactor3)
+
+df$Class <- as.factor(df$Class)
+
+unique_classes <- unique(df$Class)
+print(unique_classes)
+print(table(df$Class))
+df$EquivDiameter <- as.numeric(gsub(",", ".", df$EquivDiameter))
+df$roundness <- as.numeric(gsub(",", ".", df$roundness))
+df$ShapeFactor3 <- as.numeric(gsub(",", ".", df$ShapeFactor3))
+```
+
+## podział na zbiór treningowy i testowy
+
+```{r}
+# Podział danych na zbiór treningowy i testowy
+set.seed(123)  # Ustalanie ziarna losowego
+trainIndex <- createDataPartition(df$Class, p = 0.7, list = FALSE)
+
+data_train <- df[trainIndex, ]
+data_test <- df[-trainIndex, ]
+
+# Sprawdzenie rozmiarów zbiorów
+cat("Rozmiar zbioru treningowego:", nrow(data_train), "\n")
+cat("Rozmiar zbioru testowego:", nrow(data_test), "\n")
+```
+
+## Zad 3a
+
+```{r}
+# Zbudować model klasyfikacji metodą LDA dla podanych zmiennych objaśniających i zmiennej objaśnianej.
+
+lda_model <- lda(Class ~ Area + EquivDiameter + roundness + ShapeFactor3, data = data_train)
+# Podsumowanie modelu
+summary(lda_model)
+
+# Przewidywanie na zbiorze testowym
+predictions <- predict(lda_model, newdata = data_test)
+
+# Ocena modelu
+confusion_matrix <- confusionMatrix(predictions$class, data_test$Class)
+print(confusion_matrix)
+
+# Wykres dyskryminanty
+plot(lda_model)
+```
+
+## Zad 3b
+
+```{r}
+# Zbudować model klasyfikacji metodą LDA dla dwóch pierwszych zmiennych kanonicznych otrzymanych w podpunkcie a). Zrobić odpowiedni wykres z obszarami klasyfikacji.
+
+library(gridExtra)
+
+# Wykorzystanie modelu LDA do uzyskania zmiennych kanonicznych
+lda_values <- predict(lda_model)$x
+
+# Dodanie zmiennej klasowej do danych
+lda_df <- data.frame(lda_values, Class = data_train$Class)
+
+# Wykres LDA z obszarami klasyfikacji
+ggplot(lda_df, aes(x = LD1, y = LD2, color = Class)) +
+  geom_point(alpha = 0.7, size = 3) +
+  stat_ellipse(type = "norm", level = 0.95) +
+  labs(title = "Wykres LDA z obszarami klasyfikacji",
+       x = "Pierwsza zmienna kanoniczna (LD1)",
+       y = "Druga zmienna kanoniczna (LD2)") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+```
+
+## zad 3c
+
+```{r}
+#Porównać prawdopodobieństwa błędnej klasyfikacji w podpunktach a) i b) za pomocą kroswalidacji n-krotnej i 10-krotnej.
+
+n_k <- 5  # Ustal liczbę krotności n
+control_nk <- trainControl(method = "cv", number = n_k)
+
+# Budowa modelu LDA z n-krotną kroswalidacją
+lda_model_nk <- train(Class ~ Area + EquivDiameter + roundness + ShapeFactor3, 
+                       data = df, 
+                       method = "lda", 
+                       trControl = control_nk)
+
+# Kroswalidacja 10-krotna
+control_10k <- trainControl(method = "cv", number = 10)
+
+# Budowa modelu LDA z 10-krotną kroswalidacją
+lda_model_10k <- train(Class ~ Area + EquivDiameter + roundness + ShapeFactor3, 
+                        data = df, 
+                        method = "lda", 
+                        trControl = control_10k)
+
+# Prawdopodobieństwo błędnej klasyfikacji
+accuracy_nk <- lda_model_nk$results$Accuracy
+accuracy_10k <- lda_model_10k$results$Accuracy
+
+# Obliczenie błędnej klasyfikacji
+lda_error_rate_nk <- 1 - accuracy_nk
+lda_error_rate_10k <- 1 - accuracy_10k
+
+# Wyświetlenie wyników
+cat("Błędna klasyfikacja (n-krotna):", lda_error_rate_nk, "\n")
+cat("Błędna klasyfikacja (10-krotna):", lda_error_rate_10k, "\n")
+```
+
+##zad 4a
+
+```{r}
+#Zbudować model klasyfikacji metodą LDA dla dwóch pierwszych zmiennych kanonicznych. Zrobić odpowiedni wykres z obszarami klasyfikacji.
+
+# Wykres LDA z obszarami klasyfikacji
+lda_model <- lda(Class ~ Area + EquivDiameter + roundness + ShapeFactor3, data = data_train)
+lda_values <- predict(lda_model)$x
+lda_df <- data.frame(lda_values, Class = data_train$Class)
+
+ggplot(lda_df, aes(x = LD1, y = LD2, color = Class)) +
+  geom_point(alpha = 0.7, size = 3) +
+  stat_ellipse(type = "norm", level = 0.95) +
+  labs(title = "Wykres LDA z obszarami klasyfikacji",
+       x = "Pierwsza zmienna kanoniczna (LD1)",
+       y = "Druga zmienna kanoniczna (LD2)") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+```
+
+## zad 4b
+
+```{r}
+# Zbudować model klasyfikacji oparty na regresji logistycznej (z wieloma klasami) z karą dla podanych zmiennych objaśniających i zmiennej objaśnianej. Parametry funkcji kary dobrać tak aby prawdopodobieństwa błędnej klasyfikacji liczone za pomocą kroswalidacji n-krotnej i 10-krotnej było jak najmniejsze.
+
+# Definicja parametrów kroswalidacji
+control_nk <- trainControl(method = "cv", number = 5)  # n-krotna kroswalidacja
+control_10k <- trainControl(method = "cv", number = 10)  # 10-krotna kroswalidacja
+
+# Przygotowanie macierzy zmiennych objaśniających (X) oraz zmiennej zależnej (y)
+X <- as.matrix(df[, c("Area", "EquivDiameter", "roundness", "ShapeFactor3")])
+y <- df$Class
+
+# Budowa modelu z regularyzacją (elastic net: mieszanka L1 i L2)
+grid <- expand.grid(alpha = seq(0, 1, length = 5),  # α=0 (ridge), α=1 (lasso), wartości pośrednie to elastic net
+                    lambda = 10^seq(-3, 3, length = 10))  # zakres współczynnika kary
+
+# Trenowanie modelu z n-krotną kroswalidacją
+logistic_model_nk <- train(X, y,
+                           method = "glmnet",
+                           trControl = control_nk,
+                           tuneGrid = grid,
+                           family = "multinomial")
+
+# Trenowanie modelu z 10-krotną kroswalidacją
+logistic_model_10k <- train(X, y,
+                            method = "glmnet",
+                            trControl = control_10k,
+                            tuneGrid = grid,
+                            family = "multinomial")
+
+# Wybór najlepszych parametrów (lambda i alpha)
+best_params_nk <- logistic_model_nk$bestTune
+best_params_10k <- logistic_model_10k$bestTune
+
+# Obliczenie błędnej klasyfikacji
+accuracy_nk <- max(logistic_model_nk$results$Accuracy)
+accuracy_10k <- max(logistic_model_10k$results$Accuracy)
+
+error_rate_nk <- 1 - accuracy_nk
+error_rate_10k <- 1 - accuracy_10k
+
+# Wyświetlenie wyników
+cat("Najlepsze parametry (n-krotna) Alpha =", best_params_nk$alpha, ", Lambda =", best_params_nk$lambda, "\n")
+cat("Błędna klasyfikacja (n-krotna) dla regresji logistycznej:", error_rate_nk, "\n")
+cat("Najlepsze parametry (10-krotna): Alpha =", best_params_10k$alpha, ", Lambda =", best_params_10k$lambda, "\n")
+cat("Błędna klasyfikacja (10-krotna): dla regresji logistycznej", error_rate_10k, "\n")
+cat("Błędna klasyfikacja (n-krotna) dla LDA:", lda_error_rate_nk, "\n")
+cat("Błędna klasyfikacja (10-krotna) dla LDA:", lda_error_rate_10k, "\n")
+```
+
+## zad 4c
+
+```{r}
+#Porównać prawdopodobieństwa błędnej klasyfikacji w podpunktach a) i b) za pomocą kroswalidacji n-krotnej i 10-krotnej.
+
+improvement_nk <- (lda_error_rate_nk - error_rate_nk) / lda_error_rate_nk * 100
+improvement_10k <- (lda_error_rate_10k - error_rate_10k) / lda_error_rate_10k * 100
+cat("Regresja logistyczna jest o", round(improvement_nk, 2), "% skuteczniejsza od LDA w n-krotnej kroswalidacji.\n")
+cat("Regresja logistyczna jest o", round(improvement_10k, 2), "% skuteczniejsza od LDA w 10-krotnej kroswalidacji.\n")
+```
