@@ -1,7 +1,7 @@
 # Zadanie Na Studia
 
 ### najpierw należy pobrać dane dry_beans.csv
-[dane](https://github.com/Zypeks/badanianaukowe/blob/main/Dry_Bean_Dataset.csv)
+[dane](https://github.com/Zypeks/badanianaukowe/blob/main/Dry_Bean_Dataset.csv)https://github.com/Zypeks/badanianaukowe/blob/main/README.md
 ### Zbudować model klasyfikacji metodą LDA dla podanych zmiennych objaśniających i zmiennej objaśnianej.
 - Zbudować model klasyfikacji metodą LDA dla dwóch pierwszych zmiennych kanonicznych otrzymanych w podpunkcie a). 
   - Zrobić odpowiedni wykres z obszarami klasyfikacji.
@@ -11,3 +11,4 @@
   - Parametry funkcji kary dobrać tak aby prawdopodobieństwa błędnej klasyfikacji liczone za pomocą kroswalidacji n-krotnej i 10-krotnej było jak najmniejsze.
   - Porównać prawdopodobieństwa błędnej klasyfikacji w podpunktach a) i b) za pomocą kroswalidacji n-krotnej i 10-krotnej.
 
+![Wyniki skuteczności badanych metod]([https://example.com/path/to/image.png](https://github.com/Zypeks/badanianaukowe/blob/main/4321.png)
